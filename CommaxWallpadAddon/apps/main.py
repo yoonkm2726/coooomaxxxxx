@@ -481,6 +481,14 @@ class WallpadController:
 if __name__ == '__main__':
     with open('/data/options.json') as file:
         CONFIG = json.load(file)
+
+    # 🕵️‍♂️ 아래 디버깅 코드를 추가!
+    logger_for_debug = Logger(debug=True, elfin_log=True, mqtt_log=True)
+    logger_for_debug.info("--- Addon-in an-geladen Configuratie ---")
+    logger_for_debug.info(json.dumps(CONFIG, indent=2))
+    logger_for_debug.info("------------------------------------")
+    # 🕵️‍♂️ 여기까지 추가
+
     logger = Logger(
         debug=CONFIG['log']['DEBUG'],
         elfin_log=CONFIG['log']['elfin_log'],
@@ -489,6 +497,6 @@ if __name__ == '__main__':
     logger.info("╔══════════════════════════════════════════╗")
     logger.info("║     Commax Wallpad Addon (TCP Version)     ║")
     logger.info("╚══════════════════════════════════════════╝")
-    
+
     controller = WallpadController(CONFIG, logger)
     controller.run()
