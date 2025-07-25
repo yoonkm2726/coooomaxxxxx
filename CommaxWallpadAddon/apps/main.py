@@ -52,30 +52,36 @@ class WallpadController:
         self.config: Dict[str, Any] = config
         self.logger: Logger = logger
         self.share_dir: str = '/share'
-        
+    
         self.ELFIN_TOPIC: str = config.get('elfin_TOPIC', 'ew11')
         self.HA_TOPIC: str = config.get('mqtt_TOPIC', 'commax')
         self.STATE_TOPIC: str = self.HA_TOPIC + '/{}/{}/state'
-        self.TCP_HOST: str = self.config['tcp'].get('tcp_server') or os.getenv('TCP_HOST') or "0.0.0.0"
-        self.TCP_PORT: int = int(self.config['tcp'].get('tcp_port') or os.getenv('TCP_PORT') or 1883)
+    
+        # --- 💡 여기가 핵심 수정 부분입니다 💡 ---
+        # config.get('tcp', {})를 사용해 'tcp' 항목이 없어도 오류 대신 빈 딕셔너리를 반환합니다.
+        tcp_config = self.config.get('tcp', {})
+        self.TCP_HOST: str = tcp_config.get('tcp_server') or os.getenv('TCP_HOST') or "0.0.0.0"
+        self.TCP_PORT: int = int(tcp_config.get('tcp_port') or os.getenv('TCP_PORT') or 1883)
+        # --- 💡 수정 끝 ---
+    
         self.QUEUE: List[QueueItem] = []
         self.max_send_count: int = self.config['command_settings'].get('max_send_count', 20)
         self.min_receive_count: int = self.config['command_settings'].get('min_receive_count', 3)
         self.COLLECTDATA: CollectData = {
             'send_data': [], 'recv_data': [], 'recent_recv_data': set(), 'last_recv_time': time.time_ns()
         }
-        
+    
         self.tcp_server: Optional[asyncio.Server] = None
         self.writers: Dict[str, asyncio.StreamWriter] = {} 
         self.device_list: Optional[Dict[str, Any]] = None
         self.DEVICE_STRUCTURE: Optional[Dict[str, Any]] = None
-        
+    
         self.load_devices_and_packets_structures()
         self.web_server = WebServer(self)
         self.elfin_reboot_count: int = 0
         self.elfin_unavailable_notification_enabled: bool = self.config['elfin'].get('elfin_unavailable_notification', False)
         self.send_command_on_idle: bool = self.config['command_settings'].get('send_command_on_idle', True)
-        
+    
         self.message_processor = MessageProcessor(self)
         self.discovery_publisher = DiscoveryPublisher(self)
         self.state_updater = StateUpdater(self.STATE_TOPIC, self.publish_to_ha) 
